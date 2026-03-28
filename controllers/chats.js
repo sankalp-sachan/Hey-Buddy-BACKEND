@@ -1,5 +1,6 @@
 import Chat from '../models/Chat.js';
 import User from '../models/User.js';
+import Message from '../models/Message.js';
 
 // @desc    Access or create a 1-to-1 chat
 export const accessChat = async (req, res, next) => {
@@ -183,6 +184,29 @@ export const deleteChat = async (req, res, next) => {
     await Message.deleteMany({ chatId: req.params.id });
     await Chat.findByIdAndDelete(req.params.id);
     res.json({ message: 'Chat deleted' });
+  } catch (error) {
+    next(error);
+  }
+};
+// @desc    Get a single chat by ID
+export const getChatById = async (req, res, next) => {
+  try {
+    const chat = await Chat.findById(req.params.id)
+      .populate('participants', '-password')
+      .populate('adminIds', '-password')
+      .populate('lastMessage');
+
+    if (!chat) {
+       res.status(404);
+       return next(new Error('Chat not found'));
+    }
+
+    const fullChat = await User.populate(chat, {
+      path: 'lastMessage.senderId',
+      select: 'username avatar email status lastSeen',
+    });
+
+    res.status(200).json(fullChat);
   } catch (error) {
     next(error);
   }

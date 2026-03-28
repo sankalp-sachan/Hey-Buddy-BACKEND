@@ -7,6 +7,7 @@ import {
   addToGroup,
   removeFromGroup,
   deleteChat,
+  getChatById,
 } from '../controllers/chats.js';
 import { protect } from '../middlewares/auth.js';
 
@@ -14,6 +15,7 @@ const router = express.Router();
 
 router.post('/', protect, accessChat);
 router.get('/', protect, fetchChats);
+router.get('/:id', protect, getChatById);
 router.post('/group', protect, createGroupChat);
 router.put('/rename', protect, renameGroup);
 router.put('/groupadd', protect, addToGroup);
