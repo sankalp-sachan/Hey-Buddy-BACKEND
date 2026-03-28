@@ -94,3 +94,21 @@ export const clearMessages = async (req, res, next) => {
     next(error);
   }
 };
+// @desc    Mark media as opened (View Once)
+export const openMedia = async (req, res, next) => {
+  try {
+    const { messageId, mediaIndex } = req.params;
+    const message = await Message.findById(messageId);
+    
+    if (!message) return res.status(404).json({ message: 'Message not found' });
+    
+    if (message.media[mediaIndex]) {
+       message.media[mediaIndex].opened = true;
+       await message.save();
+    }
+    
+    res.json({ message: 'Media marked as opened' });
+  } catch (error) {
+    next(error);
+  }
+};

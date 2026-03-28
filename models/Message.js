@@ -23,6 +23,8 @@ const messageSchema = new mongoose.Schema({
       enum: ['image', 'video', 'file', 'audio'],
     },
     size: Number,
+    viewOnce: { type: Boolean, default: false },
+    opened: { type: Boolean, default: false },
   }],
   status: {
     type: String,
