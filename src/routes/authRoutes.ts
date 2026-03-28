@@ -10,6 +10,7 @@ const signupSchema = z.object({
     username: z.string().min(3).max(30),
     email: z.string().email(),
     password: z.string().min(6),
+    phoneNumber: z.string().min(10, "Phone number must be at least 10 digits"),
   }),
 });
 

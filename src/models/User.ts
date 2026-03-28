@@ -3,7 +3,7 @@ import mongoose, { Schema, Document } from "mongoose";
 export interface IUser extends Document {
   username: string;
   email: string;
-  phoneNumber?: string;
+  phoneNumber: string;
   avatar?: string;
   status: "online" | "offline";
   lastSeen: Date;
@@ -27,7 +27,7 @@ const UserSchema: Schema = new Schema({
   },
   phoneNumber: {
     type: String,
-    sparse: true,
+    required: true,
     unique: true,
   },
   avatar: {
