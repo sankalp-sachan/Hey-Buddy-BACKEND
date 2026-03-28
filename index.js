@@ -21,7 +21,7 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: process.env.CLIENT_URL || 'http://localhost:5173',
+    origin: process.env.CLIENT_URL || 'https://hey-buddy-theta.vercel.app',
     methods: ['GET', 'POST'],
     credentials: true,
   },
@@ -31,7 +31,7 @@ const io = new Server(server, {
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:5173',
+  origin: process.env.CLIENT_URL || 'https://hey-buddy-theta.vercel.app',
   credentials: true,
 }));
 app.use(helmet());
