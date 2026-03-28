@@ -9,6 +9,7 @@ export const register = async (req, res, next) => {
     username: Joi.string().min(3).required(),
     email: Joi.string().email().required(),
     password: Joi.string().min(6).required(),
+    phoneNumber: Joi.string().required(),
     avatar: Joi.string().optional(),
   });
 
@@ -18,7 +19,7 @@ export const register = async (req, res, next) => {
     return next(new Error(error.details[0].message));
   }
 
-  const { username, email, password, avatar } = req.body;
+  const { username, email, password, phoneNumber, avatar } = req.body;
 
   try {
     const userExists = await User.findOne({ email });
@@ -33,7 +34,13 @@ export const register = async (req, res, next) => {
       return next(new Error('Username already taken'));
     }
 
-    const user = await User.create({ username, email, password, avatar });
+    const phoneExists = await User.findOne({ phoneNumber });
+    if (phoneExists) {
+      res.status(400);
+      return next(new Error('Phone number already registered'));
+    }
+
+    const user = await User.create({ username, email, password, phoneNumber, avatar });
 
     if (user) {
       generateToken(res, user._id);
@@ -94,6 +101,9 @@ export const getProfile = async (req, res) => {
     username: req.user.username,
     email: req.user.email,
     avatar: req.user.avatar,
+    phoneNumber: req.user.phoneNumber,
+    about: req.user.about,
+    status: req.user.status,
   };
   res.status(200).json(user);
 };
