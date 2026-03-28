@@ -16,12 +16,13 @@ const messageSchema = new mongoose.Schema({
     trim: true,
   },
   media: [{
-    url: String,
+    content: String, // Base64 data
+    fileName: String,
     type: {
       type: String,
       enum: ['image', 'video', 'file', 'audio'],
     },
-    publicId: String,
+    size: Number,
   }],
   status: {
     type: String,
