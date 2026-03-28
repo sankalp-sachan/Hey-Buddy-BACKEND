@@ -43,6 +43,10 @@ const userSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
+  pushSubscription: {
+    type: Object,
+    default: null,
+  },
 }, { timestamps: true });
 
 // Hash password before saving
