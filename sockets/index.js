@@ -1,15 +1,23 @@
+import User from '../models/User.js';
+
 export const setupSocket = (io) => {
   io.on('connection', (socket) => {
-    console.log('Connected to socket.io');
+    let connectedUserId = null;
 
-    socket.on('setup', (userData) => {
+    socket.on('setup', async (userData) => {
+      if (!userData) return;
+      connectedUserId = userData._id;
       socket.join(userData._id);
+      
+      // Update user status in DB
+      await User.findByIdAndUpdate(userData._id, { status: 'online', lastSeen: new Date() });
+      socket.broadcast.emit('user_online', userData._id);
+      
       socket.emit('connected');
     });
 
     socket.on('join_chat', (room) => {
       socket.join(room);
-      console.log('User Joined Room: ' + room);
     });
 
     socket.on('typing', (room) => socket.in(room).emit('typing'));
@@ -17,19 +25,19 @@ export const setupSocket = (io) => {
 
     socket.on('new_message', (newMessageReceived) => {
       var chat = newMessageReceived.chatId;
-
-      if (!chat.participants) return console.log('chat.participants not defined');
+      if (!chat.participants) return;
 
       chat.participants.forEach((user) => {
         if (user._id == newMessageReceived.senderId._id) return;
-
         socket.in(user._id).emit('message_received', newMessageReceived);
       });
     });
 
-    socket.on('disconnect', () => {
-      console.log('USER DISCONNECTED');
-      // socket.leave(userData._id); // This is not needed as it happens automatically on disconnect
+    socket.on('disconnect', async () => {
+      if (connectedUserId) {
+        await User.findByIdAndUpdate(connectedUserId, { status: 'offline', lastSeen: new Date() });
+        socket.broadcast.emit('user_offline', connectedUserId);
+      }
     });
   });
 };

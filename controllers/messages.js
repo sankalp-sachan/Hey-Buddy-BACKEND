@@ -79,3 +79,18 @@ export const deleteMessage = async (req, res, next) => {
     next(error);
   }
 };
+// @desc    Clear all messages for a chat
+export const clearMessages = async (req, res, next) => {
+  try {
+    const chat = await Chat.findById(req.params.chatId);
+    if (!chat.participants.includes(req.user._id)) {
+      res.status(403);
+      return next(new Error('Unauthorized to clear this chat'));
+    }
+    await Message.deleteMany({ chatId: req.params.chatId });
+    await Chat.findByIdAndUpdate(req.params.chatId, { lastMessage: null });
+    res.json({ message: 'Chat cleared' });
+  } catch (error) {
+    next(error);
+  }
+};

@@ -172,3 +172,18 @@ export const removeFromGroup = async (req, res, next) => {
     next(error);
   }
 };
+// @desc    Delete a chat
+export const deleteChat = async (req, res, next) => {
+  try {
+    const chat = await Chat.findById(req.params.id);
+    if (!chat.participants.includes(req.user._id)) {
+      res.status(403);
+      return next(new Error('Unauthorized to delete this chat'));
+    }
+    await Message.deleteMany({ chatId: req.params.id });
+    await Chat.findByIdAndDelete(req.params.id);
+    res.json({ message: 'Chat deleted' });
+  } catch (error) {
+    next(error);
+  }
+};
