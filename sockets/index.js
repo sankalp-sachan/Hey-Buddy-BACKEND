@@ -33,6 +33,22 @@ export const setupSocket = (io) => {
       });
     });
 
+    socket.on('call_user', ({ userToCall, signalData, from, callerName, type }) => {
+      socket.in(userToCall).emit('incoming_call', { signal: signalData, from, callerName, type });
+    });
+
+    socket.on('answer_call', (data) => {
+      socket.in(data.to).emit('call_accepted', data.signal);
+    });
+
+    socket.on('reject_call', (data) => {
+       socket.in(data.to).emit('call_rejected', { msg: "Call Rejected" });
+    });
+
+    socket.on('end_call', (data) => {
+      socket.in(data.to).emit('call_ended');
+    });
+
     socket.on('disconnect', async () => {
       if (connectedUserId) {
         await User.findByIdAndUpdate(connectedUserId, { status: 'offline', lastSeen: new Date() });
