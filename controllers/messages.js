@@ -2,45 +2,37 @@ import Message from '../models/Message.js';
 import User from '../models/User.js';
 import Chat from '../models/Chat.js';
 
-// @desc    Get all messages for a chat
+// @desc    Get all messages for a chat (DISABLED: Now using local storage)
 export const getMessages = async (req, res, next) => {
   try {
-    const messages = await Message.find({ chatId: req.params.chatId })
-      .populate('senderId', 'username avatar email')
-      .populate('chatId');
-    res.json(messages);
+    // Return empty array as messages are stored locally
+    res.json([]);
   } catch (error) {
     next(error);
   }
 };
 
-// @desc    Send a message
+// @desc    Send a message (Relay only, no storage)
 export const sendMessage = async (req, res, next) => {
-  const { text, chatId } = req.body;
+  const { text, chatId, media } = req.body;
 
-  if (!chatId || (!text && !req.body.media)) {
+  if (!chatId || (!text && !media)) {
     res.status(400);
     return next(new Error('Invalid data passed into request'));
   }
 
-  const newMessage = {
-    senderId: req.user._id,
-    text: text,
-    chatId: chatId,
-    media: req.body.media || [],
-  };
-
+  // Just return the populated structure - NOT saving to DB
   try {
-    let message = await Message.create(newMessage);
-
-    message = await message.populate('senderId', 'username avatar');
-    message = await message.populate('chatId');
-    message = await User.populate(message, {
-      path: 'chatId.participants',
-      select: 'username avatar email',
-    });
-
-    await Chat.findByIdAndUpdate(req.body.chatId, { lastMessage: message });
+    const user = await User.findById(req.user._id).select('username avatar email');
+    
+    const message = {
+      _id: `server_relay_${Date.now()}`,
+      senderId: user,
+      text: text,
+      chatId: { _id: chatId },
+      media: media || [],
+      createdAt: new Date(),
+    };
 
     res.json(message);
   } catch (error) {
@@ -48,67 +40,22 @@ export const sendMessage = async (req, res, next) => {
   }
 };
 
-// @desc    Edit a message
+// @desc    Edit a message (DISABLED)
 export const editMessage = async (req, res, next) => {
-  const { messageId, text } = req.body;
-  try {
-    const message = await Message.findById(messageId);
-    if (message.senderId.toString() !== req.user._id.toString()) {
-      res.status(403);
-      return next(new Error('Unauthorized to edit this message'));
-    }
-    message.text = text;
-    await message.save();
-    res.json(message);
-  } catch (error) {
-    next(error);
-  }
+  res.json({ message: 'Editing is now local-only' });
 };
 
 // @desc    Delete a message
 export const deleteMessage = async (req, res, next) => {
-  try {
-    const message = await Message.findById(req.params.messageId);
-    if (message.senderId.toString() !== req.user._id.toString()) {
-      res.status(403);
-      return next(new Error('Unauthorized to delete this message'));
-    }
-    await message.delete();
-    res.json({ message: 'Message deleted' });
-  } catch (error) {
-    next(error);
-  }
+  res.json({ message: 'Delete messages from your local history' });
 };
+
 // @desc    Clear all messages for a chat
 export const clearMessages = async (req, res, next) => {
-  try {
-    const chat = await Chat.findById(req.params.chatId);
-    if (!chat.participants.includes(req.user._id)) {
-      res.status(403);
-      return next(new Error('Unauthorized to clear this chat'));
-    }
-    await Message.deleteMany({ chatId: req.params.chatId });
-    await Chat.findByIdAndUpdate(req.params.chatId, { lastMessage: null });
-    res.json({ message: 'Chat cleared' });
-  } catch (error) {
-    next(error);
-  }
+  res.json({ message: 'Clear messages from your local history' });
 };
-// @desc    Mark media as opened (View Once)
+
+// @desc    Mark media as opened (DISABLED: Handled locally)
 export const openMedia = async (req, res, next) => {
-  try {
-    const { messageId, mediaIndex } = req.params;
-    const message = await Message.findById(messageId);
-    
-    if (!message) return res.status(404).json({ message: 'Message not found' });
-    
-    if (message.media[mediaIndex]) {
-       message.media[mediaIndex].opened = true;
-       await message.save();
-    }
-    
-    res.json({ message: 'Media marked as opened' });
-  } catch (error) {
-    next(error);
-  }
+  res.json({ message: 'Media view status is now local' });
 };
