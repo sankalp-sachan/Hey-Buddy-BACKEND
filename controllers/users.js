@@ -33,19 +33,3 @@ export const getUserById = async (req, res, next) => {
     next(error);
   }
 };
-// @desc    Save push subscription
-export const subscribeUser = async (req, res, next) => {
-  try {
-    const user = await User.findById(req.user._id);
-    if (!user) {
-      res.status(404);
-      return next(new Error('User not found'));
-    }
-
-    user.pushSubscription = req.body; // { endpoint, keys }
-    await user.save();
-    res.json({ success: true, message: 'Subscription saved' });
-  } catch (error) {
-    next(error);
-  }
-};

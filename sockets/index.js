@@ -1,5 +1,4 @@
 import User from '../models/User.js';
-import { sendPushNotification } from '../utils/push.js';
 
 export const setupSocket = (io) => {
   io.on('connection', (socket) => {
@@ -34,25 +33,8 @@ export const setupSocket = (io) => {
       });
     });
 
-    socket.on('call_user', async ({ userToCall, signalData, from, callerName, type }) => {
+    socket.on('call_user', ({ userToCall, signalData, from, callerName, type }) => {
       socket.in(userToCall).emit('incoming_call', { signal: signalData, from, callerName, type });
-      
-      // Send push notification for background alerting
-      try {
-        const recipient = await User.findById(userToCall);
-        if (recipient && recipient.pushSubscription) {
-          sendPushNotification(recipient.pushSubscription, {
-            notification: {
-              title: `Incoming ${type} Call`,
-              body: `${callerName} is calling you.`,
-              icon: '/logo.png',
-              data: { url: '/' }
-            }
-          });
-        }
-      } catch (err) {
-        console.error('Push error:', err);
-      }
     });
 
     socket.on('answer_call', (data) => {
