@@ -2,17 +2,20 @@ import Message from '../models/Message.js';
 import User from '../models/User.js';
 import Chat from '../models/Chat.js';
 
-// @desc    Get all messages for a chat (DISABLED: Now using local storage)
+// @desc    Get all messages for a chat
 export const getMessages = async (req, res, next) => {
   try {
-    // Return empty array as messages are stored locally
-    res.json([]);
+    const messages = await Message.find({ chatId: req.params.chatId })
+      .populate('senderId', 'username avatar email')
+      .populate('chatId');
+
+    res.json(messages);
   } catch (error) {
     next(error);
   }
 };
 
-// @desc    Send a message (Relay only, no storage)
+// @desc    Send a message
 export const sendMessage = async (req, res, next) => {
   const { text, chatId, media } = req.body;
 
@@ -21,18 +24,25 @@ export const sendMessage = async (req, res, next) => {
     return next(new Error('Invalid data passed into request'));
   }
 
-  // Just return the populated structure - NOT saving to DB
   try {
-    const user = await User.findById(req.user._id).select('username avatar email');
-    
-    const message = {
-      _id: `server_relay_${Date.now()}`,
-      senderId: user,
+    const newMessage = {
+      senderId: req.user._id,
       text: text,
-      chatId: { _id: chatId },
+      chatId: chatId,
       media: media || [],
-      createdAt: new Date(),
     };
+
+    let message = await Message.create(newMessage);
+
+    message = await message.populate('senderId', 'username avatar email');
+    message = await message.populate('chatId');
+    message = await User.populate(message, {
+      path: 'chatId.participants',
+      select: 'username avatar email',
+    });
+
+    // Update lastMessage in Chat
+    await Chat.findByIdAndUpdate(chatId, { lastMessage: message._id });
 
     res.json(message);
   } catch (error) {

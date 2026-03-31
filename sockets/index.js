@@ -10,6 +10,7 @@ export const setupSocket = (io) => {
       
       connectedUserId = userId.toString();
       socket.join(connectedUserId);
+      console.log('User setup room:', connectedUserId);
       
       // Update user status in DB
       await User.findByIdAndUpdate(connectedUserId, { status: 'online', lastSeen: new Date() });
@@ -20,6 +21,7 @@ export const setupSocket = (io) => {
 
     socket.on('join_chat', (room) => {
       socket.join(room);
+      console.log('User joined room:', room);
     });
 
     socket.on('typing', (room) => socket.in(room).emit('typing'));
@@ -27,13 +29,20 @@ export const setupSocket = (io) => {
 
     socket.on('new_message', (newMessageReceived) => {
       const chat = newMessageReceived.chatId;
-      if (!chat || !chat.participants) return;
+      console.log('Recieved message for chat:', chat?._id || chat);
+      
+      if (!chat || !chat.participants) {
+        console.log('Message discarded: No participants found in chatId');
+        return;
+      }
 
       chat.participants.forEach((user) => {
         const userId = user._id || user; // Handle both populated and non-populated
         const senderIdRaw = newMessageReceived.senderId._id || newMessageReceived.senderId;
 
         if (userId.toString() === senderIdRaw.toString()) return;
+        
+        console.log('Relaying message to user:', userId.toString());
         io.to(userId.toString()).emit('message_received', newMessageReceived);
       });
     });
