@@ -48,19 +48,18 @@ export const setupSocket = (io) => {
     });
 
     socket.on('call_user', ({ userToCall, signalData, from, callerName, type }) => {
-      socket.in(userToCall).emit('incoming_call', { signal: signalData, from, callerName, type });
+      console.log('Call from', callerName, 'to', userToCall);
+      io.to(userToCall).emit('incoming_call', { signal: signalData, from, callerName, type });
     });
-
     socket.on('answer_call', (data) => {
-      socket.in(data.to).emit('call_accepted', data.signal);
+      console.log('Call answered for to:', data.to);
+      io.to(data.to).emit('call_accepted', data.signal);
     });
-
     socket.on('reject_call', (data) => {
-       socket.in(data.to).emit('call_rejected', { msg: "Call Rejected" });
+       io.to(data.to).emit('call_rejected', { msg: "Call Rejected" });
     });
-
     socket.on('end_call', (data) => {
-      socket.in(data.to).emit('call_ended');
+      io.to(data.to).emit('call_ended');
     });
 
     socket.on('disconnect', async () => {
