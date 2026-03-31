@@ -31,13 +31,7 @@ const allowedOrigins = [
 const io = new Server(server, {
   maxHttpBufferSize: 1e8,
   cors: {
-    origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error('Not allowed by CORS'));
-      }
-    },
+    origin: "*", // Allow all origins for debugging
     methods: ['GET', 'POST'],
     credentials: true,
   },
@@ -47,13 +41,7 @@ const io = new Server(server, {
 app.use(express.json({ limit: '5000mb' }));
 app.use(express.urlencoded({ extended: true, limit: '5000mb' }));
 app.use(cors({ 
-  origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
+  origin: true, // Allow all origins reflected
   credentials: true,
 }));
 app.use(helmet({
