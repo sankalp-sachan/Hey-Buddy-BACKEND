@@ -24,12 +24,15 @@ export const setupSocket = (io) => {
     socket.on('stop_typing', (room) => socket.in(room).emit('stop_typing'));
 
     socket.on('new_message', (newMessageReceived) => {
-      var chat = newMessageReceived.chatId;
-      if (!chat.participants) return;
+      const chat = newMessageReceived.chatId;
+      if (!chat || !chat.participants) return;
 
       chat.participants.forEach((user) => {
-        if (user._id == newMessageReceived.senderId._id) return;
-        socket.in(user._id).emit('message_received', newMessageReceived);
+        const userId = user._id || user; // Handle both populated and non-populated
+        const senderId = newMessageReceived.senderId._id || newMessageReceived.senderId;
+
+        if (userId == senderId) return;
+        socket.in(userId).emit('message_received', newMessageReceived);
       });
     });
 
