@@ -25,27 +25,34 @@ const allowedOrigins = [
   'https://hey-buddy-theta.vercel.app',
   'http://localhost:5173',
   'http://localhost:5174',
+  'http://localhost:5175',
   'http://localhost:3000'
 ].filter(Boolean);
 
+// CORS Helper
+const corsOptions = {
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.indexOf(origin) !== -1 || origin.includes('localhost') || origin.includes('vercel.app')) {
+      callback(null, true);
+    } else {
+      callback(null, true); // Fallback to allowing but reflecting
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+};
+
 const io = new Server(server, {
   maxHttpBufferSize: 1e8,
-  cors: {
-    origin: "*", // Allow all origins for debugging
-    methods: ['GET', 'POST'],
-    credentials: true,
-  },
+  cors: corsOptions,
 });
 
 // Middleware
 app.use(express.json({ limit: '5000mb' }));
 app.use(express.urlencoded({ extended: true, limit: '5000mb' }));
-app.use(cors({ 
-  origin: true, // Allow all origins reflected
-  credentials: true,
-}));
+app.use(cors(corsOptions));
 app.use(helmet({
-  contentSecurityPolicy: false, // Disable CSP for local dev/simpler operation
+  contentSecurityPolicy: false,
 }));
 app.use(morgan('dev'));
 app.use(cookieParser());
