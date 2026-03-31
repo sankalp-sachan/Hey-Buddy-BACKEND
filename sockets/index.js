@@ -29,10 +29,10 @@ export const setupSocket = (io) => {
 
       chat.participants.forEach((user) => {
         const userId = user._id || user; // Handle both populated and non-populated
-        const senderId = newMessageReceived.senderId._id || newMessageReceived.senderId;
+        const senderIdRaw = newMessageReceived.senderId._id || newMessageReceived.senderId;
 
-        if (userId == senderId) return;
-        socket.in(userId).emit('message_received', newMessageReceived);
+        if (userId.toString() === senderIdRaw.toString()) return;
+        io.to(userId.toString()).emit('message_received', newMessageReceived);
       });
     });
 
