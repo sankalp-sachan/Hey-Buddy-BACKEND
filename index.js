@@ -19,10 +19,25 @@ dotenv.config();
 
 const app = express();
 const server = http.createServer(app);
+
+const allowedOrigins = [
+  process.env.CLIENT_URL,
+  'https://hey-buddy-theta.vercel.app',
+  'http://localhost:5173',
+  'http://localhost:5174',
+  'http://localhost:3000'
+].filter(Boolean);
+
 const io = new Server(server, {
-  maxHttpBufferSize: 1e8, // 100MB
+  maxHttpBufferSize: 1e8,
   cors: {
-    origin: process.env.CLIENT_URL || 'https://hey-buddy-theta.vercel.app',
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
     methods: ['GET', 'POST'],
     credentials: true,
   },
@@ -32,10 +47,18 @@ const io = new Server(server, {
 app.use(express.json({ limit: '5000mb' }));
 app.use(express.urlencoded({ extended: true, limit: '5000mb' }));
 app.use(cors({ 
-  origin: process.env.CLIENT_URL || 'https://hey-buddy-theta.vercel.app',
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
 }));
-app.use(helmet());
+app.use(helmet({
+  contentSecurityPolicy: false, // Disable CSP for local dev/simpler operation
+}));
 app.use(morgan('dev'));
 app.use(cookieParser());
 
@@ -51,6 +74,10 @@ const connectDB = async () => {
 };
 
 // Routes
+app.get('/', (req, res) => {
+  res.send('Oyee Chat API is running...');
+});
+
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/chats', chatRoutes);
