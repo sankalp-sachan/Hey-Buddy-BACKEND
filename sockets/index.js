@@ -5,13 +5,15 @@ export const setupSocket = (io) => {
     let connectedUserId = null;
 
     socket.on('setup', async (userData) => {
-      if (!userData) return;
-      connectedUserId = userData._id;
-      socket.join(userData._id);
+      const userId = (userData && userData._id) ? userData._id : userData;
+      if (!userId) return;
+      
+      connectedUserId = userId.toString();
+      socket.join(connectedUserId);
       
       // Update user status in DB
-      await User.findByIdAndUpdate(userData._id, { status: 'online', lastSeen: new Date() });
-      socket.broadcast.emit('user_online', userData._id);
+      await User.findByIdAndUpdate(connectedUserId, { status: 'online', lastSeen: new Date() });
+      socket.broadcast.emit('user_online', connectedUserId);
       
       socket.emit('connected');
     });
